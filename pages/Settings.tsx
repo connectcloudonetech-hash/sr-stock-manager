@@ -206,6 +206,7 @@ export const Settings: React.FC = () => {
     { id: 'categories', icon: Tag, label: 'Categories', color: 'text-orange-600', bg: 'bg-orange-50' },
     { id: 'users', icon: Users, label: 'User Management', color: 'text-purple-600', bg: 'bg-purple-50', adminOnly: true },
     { id: 'currency', icon: Banknote, label: 'Currency Settings', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { id: 'database', icon: Database, label: 'Database Status', color: 'text-blue-600', bg: 'bg-blue-50' },
     { id: 'data', icon: Database, label: 'Data Control', color: 'text-rose-600', bg: 'bg-rose-50', adminOnly: true },
     { id: 'theme', icon: isDarkMode ? Moon : Sun, label: 'Theme Settings', color: 'text-amber-600', bg: 'bg-amber-50' },
     { id: 'security', icon: ShieldCheck, label: 'Security', color: 'text-indigo-600', bg: 'bg-indigo-50' },
@@ -301,6 +302,76 @@ export const Settings: React.FC = () => {
               <Plus size={18} />
               Go to User Management
             </button>
+          </div>
+        );
+
+      case 'database':
+        const env = (import.meta as any).env;
+        const hasUrl = !!env?.VITE_SUPABASE_URL && env?.VITE_SUPABASE_URL !== 'your_supabase_project_url';
+        const hasKey = !!env?.VITE_SUPABASE_ANON_KEY && env?.VITE_SUPABASE_ANON_KEY !== 'your_supabase_anon_key';
+        const isHttps = env?.VITE_SUPABASE_URL?.startsWith('https://');
+        
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-blue-50 p-6 rounded-[32px] border border-blue-100 flex items-center gap-4">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm">
+                <Database size={24} />
+              </div>
+              <div>
+                <h3 className="font-black text-blue-900 uppercase tracking-tight">Cloud Sync</h3>
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mt-1">Supabase Connectivity</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${hasUrl ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                  <p className="font-black text-slate-900 uppercase tracking-tight text-xs">Project URL</p>
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {hasUrl ? (isHttps ? 'CONFIGURED' : 'INVALID URL') : 'MISSING'}
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${hasKey ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                  <p className="font-black text-slate-900 uppercase tracking-tight text-xs">API Key</p>
+                </div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {hasKey ? 'CONFIGURED' : 'MISSING'}
+                </p>
+              </div>
+            </div>
+
+            {!hasUrl || !hasKey || !isHttps ? (
+              <div className="bg-rose-50 p-6 rounded-[32px] border border-rose-100">
+                <div className="flex items-center gap-3 text-rose-600 mb-2">
+                  <AlertTriangle size={20} />
+                  <p className="font-black uppercase tracking-tight text-xs">Sync Disabled</p>
+                </div>
+                <p className="text-[10px] font-bold text-rose-400 uppercase leading-relaxed">
+                  Your app is currently using **LocalStorage** only. To enable cloud sync, please add your Supabase credentials to the environment variables in your deployment platform.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-emerald-50 p-6 rounded-[32px] border border-emerald-100">
+                <div className="flex items-center gap-3 text-emerald-600 mb-2">
+                  <Check size={20} />
+                  <p className="font-black uppercase tracking-tight text-xs">Cloud Active</p>
+                </div>
+                <p className="text-[10px] font-bold text-emerald-400 uppercase leading-relaxed">
+                  Your app is successfully connected to Supabase. All data is being synced to the cloud in real-time.
+                </p>
+              </div>
+            )}
+
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                Note: If you just added credentials, you may need to refresh the page or redeploy for changes to take effect.
+              </p>
+            </div>
           </div>
         );
 
