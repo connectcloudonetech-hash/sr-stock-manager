@@ -25,7 +25,11 @@ const INITIAL_CATEGORIES = [
 // Helper to check if Supabase is configured
 const isSupabaseConfigured = () => {
   const env = (import.meta as any).env;
-  return env?.VITE_SUPABASE_URL && env?.VITE_SUPABASE_ANON_KEY;
+  const isConfigured = !!(env?.VITE_SUPABASE_URL && env?.VITE_SUPABASE_ANON_KEY);
+  if (!isConfigured) {
+    console.warn('Supabase not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
+  }
+  return isConfigured;
 };
 
 // Helper to interact with LocalStorage
@@ -67,7 +71,11 @@ export const stockService = {
   getCustomers: async (): Promise<Customer[]> => {
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase.from('customers').select('*').order('name');
-      if (!error && data) return data;
+      if (error) {
+        console.error('Supabase getCustomers error:', error.message, error.details);
+      } else if (data) {
+        return data;
+      }
     }
     return getStorageData<Customer[]>(STORAGE_KEYS.CUSTOMERS, []);
   },
@@ -75,21 +83,36 @@ export const stockService = {
   getSuppliers: async (): Promise<Supplier[]> => {
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase.from('suppliers').select('*').order('name');
-      if (!error && data) return data;
+      if (error) {
+        console.error('Supabase getSuppliers error:', error.message, error.details);
+      } else if (data) {
+        return data;
+      }
     }
     return getStorageData<Supplier[]>(STORAGE_KEYS.SUPPLIERS, []);
   },
 
   addCustomer: async (name: string, details?: Partial<Customer>): Promise<Customer> => {
     const upperName = name.toUpperCase();
+    const newId = `c-${Math.random().toString(36).substr(2, 5)}`;
+    
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('customers').insert({ name: upperName, ...details }).select().single();
-      if (!error && data) return data;
+      const { data, error } = await supabase.from('customers').insert({ 
+        id: newId,
+        name: upperName, 
+        ...details 
+      }).select().single();
+      
+      if (error) {
+        console.error('Supabase addCustomer error:', error.message, error.details);
+      } else if (data) {
+        return data;
+      }
     }
     
     const customers = await stockService.getCustomers();
     const newCust: Customer = {
-      id: `c-${Math.random().toString(36).substr(2, 5)}`,
+      id: newId,
       name: upperName,
       ...details
     };
@@ -99,14 +122,25 @@ export const stockService = {
 
   addSupplier: async (name: string, details?: Partial<Supplier>): Promise<Supplier> => {
     const upperName = name.toUpperCase();
+    const newId = `s-${Math.random().toString(36).substr(2, 5)}`;
+
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('suppliers').insert({ name: upperName, ...details }).select().single();
-      if (!error && data) return data;
+      const { data, error } = await supabase.from('suppliers').insert({ 
+        id: newId,
+        name: upperName, 
+        ...details 
+      }).select().single();
+      
+      if (error) {
+        console.error('Supabase addSupplier error:', error.message, error.details);
+      } else if (data) {
+        return data;
+      }
     }
 
     const suppliers = await stockService.getSuppliers();
     const newSupplier: Supplier = {
-      id: `s-${Math.random().toString(36).substr(2, 5)}`,
+      id: newId,
       name: upperName,
       ...details
     };
@@ -128,7 +162,9 @@ export const stockService = {
   },
 
   recordSupplierMovement: async (data: Partial<StockMovement>, type: MovementType) => {
+    const newId = `sm-${Math.random().toString(36).substr(2, 9)}`;
     const movementData = {
+      id: newId,
       date: data.date!,
       type: type,
       category: data.category!.toUpperCase(),
@@ -144,22 +180,26 @@ export const stockService = {
 
     if (isSupabaseConfigured()) {
       const { data: result, error } = await supabase.from('stock_movements').insert(movementData).select().single();
-      if (!error && result) return { success: true, data: result };
+      if (error) {
+        console.error('Supabase recordSupplierMovement error:', error.message, error.details);
+      } else if (result) {
+        return { success: true, data: result };
+      }
     }
 
     const movements = getStorageData<StockMovement[]>(STORAGE_KEYS.SUPPLIER_MOVEMENTS, []);
     const newMovement: StockMovement = {
-      id: `sm-${Math.random().toString(36).substr(2, 9)}`,
       ...movementData,
       created_at: new Date().toISOString(),
-      created_by: '1'
     };
     setStorageData(STORAGE_KEYS.SUPPLIER_MOVEMENTS, [newMovement, ...movements]);
     return { success: true, data: newMovement };
   },
 
   recordCustomerMovement: async (data: Partial<StockMovement>, type: MovementType) => {
+    const newId = `cm-${Math.random().toString(36).substr(2, 9)}`;
     const movementData = {
+      id: newId,
       date: data.date!,
       type: type,
       category: data.category!.toUpperCase(),
@@ -175,15 +215,17 @@ export const stockService = {
 
     if (isSupabaseConfigured()) {
       const { data: result, error } = await supabase.from('stock_movements').insert(movementData).select().single();
-      if (!error && result) return { success: true, data: result };
+      if (error) {
+        console.error('Supabase recordCustomerMovement error:', error.message, error.details);
+      } else if (result) {
+        return { success: true, data: result };
+      }
     }
 
     const movements = getStorageData<StockMovement[]>(STORAGE_KEYS.CUSTOMER_MOVEMENTS, []);
     const newMovement: StockMovement = {
-      id: `cm-${Math.random().toString(36).substr(2, 9)}`,
       ...movementData,
       created_at: new Date().toISOString(),
-      created_by: '1'
     };
     setStorageData(STORAGE_KEYS.CUSTOMER_MOVEMENTS, [newMovement, ...movements]);
     return { success: true, data: newMovement };
