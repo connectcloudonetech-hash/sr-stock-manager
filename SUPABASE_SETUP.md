@@ -8,7 +8,7 @@ Run the following SQL in your Supabase SQL Editor:
 ```sql
 -- Create Customers table
 CREATE TABLE customers (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  id TEXT PRIMARY KEY, -- Changed from UUID to TEXT for compatibility
   name TEXT NOT NULL,
   phone TEXT,
   email TEXT,
@@ -18,7 +18,7 @@ CREATE TABLE customers (
 
 -- Create Suppliers table
 CREATE TABLE suppliers (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  id TEXT PRIMARY KEY, -- Changed from UUID to TEXT for compatibility
   name TEXT NOT NULL,
   phone TEXT,
   email TEXT,
@@ -35,12 +35,12 @@ CREATE TABLE categories (
 
 -- Create Stock Movements table
 CREATE TABLE stock_movements (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  id TEXT PRIMARY KEY, -- Changed from UUID to TEXT for compatibility
   date DATE NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('IN', 'OUT')),
   category TEXT NOT NULL,
-  customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
-  supplier_id UUID REFERENCES suppliers(id) ON DELETE SET NULL,
+  customer_id TEXT REFERENCES customers(id) ON DELETE SET NULL, -- Changed to TEXT
+  supplier_id TEXT REFERENCES suppliers(id) ON DELETE SET NULL, -- Changed to TEXT
   qty INTEGER NOT NULL,
   nos INTEGER NOT NULL,
   unit_price DECIMAL,
@@ -48,7 +48,7 @@ CREATE TABLE stock_movements (
   amount DECIMAL,
   remarks TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  created_by UUID
+  created_by TEXT
 );
 ```
 
