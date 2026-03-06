@@ -25,10 +25,18 @@ const INITIAL_CATEGORIES = [
 // Helper to check if Supabase is configured
 const isSupabaseConfigured = () => {
   const env = (import.meta as any).env;
-  const isConfigured = !!(env?.VITE_SUPABASE_URL && env?.VITE_SUPABASE_ANON_KEY);
-  if (!isConfigured) {
-    console.warn('Supabase not configured. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.');
-  }
+  const url = env?.VITE_SUPABASE_URL;
+  const key = env?.VITE_SUPABASE_ANON_KEY;
+  
+  // Check if variables exist and aren't just the placeholder strings from .env.example
+  const isConfigured = !!(
+    url && 
+    key && 
+    url !== 'your_supabase_project_url' && 
+    key !== 'your_supabase_anon_key' &&
+    url.startsWith('https://')
+  );
+  
   return isConfigured;
 };
 
