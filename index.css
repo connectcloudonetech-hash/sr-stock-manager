@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+}
+
+@layer base {
+  :root {
+    --app-primary: #ef4444;
+    --app-secondary: #1e293b;
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased select-none overflow-x-hidden transition-colors duration-300;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
+
+  .dark .bg-white {
+    @apply bg-slate-900 border-slate-800;
+  }
+
+  .dark .text-slate-900 {
+    @apply text-slate-100;
+  }
+
+  .dark .text-slate-600 {
+    @apply text-slate-400;
+  }
+
+  .dark .border-slate-100 {
+    @apply border-slate-800;
+  }
+
+  .dark .bg-slate-50 {
+    @apply bg-slate-900/50;
+  }
+
+  /* Prevent text selection on UI elements for native feel */
+  button, nav, header {
+    @apply select-none;
+  }
+}
+
+@layer components {
+  .mobile-card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-soft p-4 transition-all active:scale-[0.98];
+  }
+
+  .btn-gradient-primary {
+    @apply bg-gradient-to-br from-red-500 to-red-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-red-200 active:scale-95 transition-all flex items-center justify-center gap-2;
+  }
+
+  .btn-gradient-secondary {
+    @apply bg-gradient-to-br from-slate-800 to-slate-900 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2;
+  }
+
+  .input-mobile {
+    @apply w-full bg-slate-100 border-none rounded-2xl px-4 py-3.5 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-red-500/20 outline-none transition-all;
+  }
+
+  .floating-label-group {
+    @apply relative mb-4;
+  }
+
+  .floating-label {
+    @apply absolute left-4 top-3.5 text-slate-400 transition-all pointer-events-none;
+  }
+
+  .input-mobile:focus ~ .floating-label,
+  .input-mobile:not(:placeholder-shown) ~ .floating-label {
+    @apply -top-2 left-3 text-[10px] font-bold text-red-500 bg-white px-1 rounded;
+  }
+
+  .fab {
+    @apply fixed bottom-24 right-6 w-14 h-14 rounded-full bg-red-600 text-white shadow-2xl shadow-red-300 flex items-center justify-center z-40 active:scale-90 transition-all;
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-all;
+  }
+
+  .bottom-nav-item.active {
+    @apply text-red-600;
+  }
+
+  .bottom-nav-item:not(.active) {
+    @apply text-slate-400;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 0px;
+  }
+}
+
+@keyframes splash-fade {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); pointer-events: none; }
+}
+
+.animate-splash-out {
+  animation: splash-fade 0.5s ease-out forwards;
+}
