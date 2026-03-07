@@ -28,8 +28,8 @@ export const SplashScreen: React.FC = () => {
             transition={{ duration: 0.8, ease: "backOut" }}
             className="flex flex-col items-center"
           >
-            <img src={LOGO_URL} alt="SR INFOTECH" className="w-32 h-32 object-contain mb-6" />
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter">SR INFOTECH</h1>
+            <img src={LOGO_URL} alt="SR INFOTECH UAE" className="w-32 h-32 object-contain mb-6" />
+            <h1 className="text-3xl font-black text-slate-900 tracking-tighter">SR INFOTECH UAE</h1>
             <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Stock Manager</p>
           </motion.div>
           

@@ -29,12 +29,11 @@ export const Layout: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showFabMenu, setShowFabMenu] = useState(false);
 
   const company = JSON.parse(localStorage.getItem('sr_company_profile') || '{}');
   const LOGO_URL = company.logo || "https://raw.githubusercontent.com/connectcloudonetech-hash/cloudoneuae/refs/heads/main/images/logo-512.png";
-  const COMPANY_NAME = company.name || "SR INFOTECH";
+  const COMPANY_NAME = company.name || "SR INFOTECH UAE";
 
   const handleLogout = () => {
     logout();
@@ -51,7 +50,6 @@ export const Layout: React.FC = () => {
 
   // Close menu on route change
   useEffect(() => {
-    setIsMenuOpen(false);
     setShowFabMenu(false);
   }, [location.pathname]);
 
@@ -92,12 +90,7 @@ export const Layout: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-1">
-          <button 
-            onClick={() => setIsMenuOpen(true)}
-            className="p-2 rounded-full active:bg-slate-100 transition-colors"
-          >
-            <Menu size={22} className="text-slate-600" />
-          </button>
+          {/* Menu button removed */}
         </div>
       </header>
 
@@ -188,70 +181,7 @@ export const Layout: React.FC = () => {
         </nav>
       </div>
 
-      {/* Side Menu Drawer */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
-            />
-            <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-[80%] bg-white z-[70] shadow-2xl flex flex-col safe-area-top"
-            >
-              <div className="p-6 flex items-center justify-between border-b border-slate-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center">
-                    <img src={LOGO_URL} alt="Logo" className="w-6 h-6 object-contain" />
-                  </div>
-                  <div>
-                    <p className="font-black text-slate-900 leading-none">{COMPANY_NAME}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Stock Manager</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="p-2 rounded-full bg-slate-50 text-slate-500 active:scale-90 transition-transform"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              
-              <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-4">Account</p>
-                  <div className="flex items-center gap-4 px-4 py-4 bg-slate-50 rounded-2xl">
-                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-red-600 shadow-sm">
-                      <UserCircle size={24} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-black text-slate-900 text-sm truncate">{user?.full_name}</p>
-                      <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">{user?.role}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 border-t border-slate-50 safe-area-bottom">
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-rose-50 text-rose-600 font-black text-sm active:scale-95 transition-transform"
-                >
-                  <LogOut size={18} />
-                  Sign Out
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Side Menu Drawer removed */}
     </div>
   );
 };

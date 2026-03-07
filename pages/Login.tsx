@@ -56,9 +56,9 @@ export const Login: React.FC = () => {
           className="text-center mb-8"
         >
           <div className="w-20 h-20 bg-white rounded-2xl mx-auto flex items-center justify-center shadow-xl shadow-slate-200/50 mb-6 p-2 border border-slate-100">
-            <img src={LOGO_URL} alt="SR INFOTECH Logo" className="w-full h-full object-contain" />
+            <img src={LOGO_URL} alt="SR INFOTECH UAE Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">SR INFOTECH</h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">SR INFOTECH UAE</h1>
           <p className="text-slate-500 text-sm font-medium mt-1">Stock Maintenance System</p>
         </motion.div>
 
@@ -141,7 +141,7 @@ export const Login: React.FC = () => {
           className="text-center mt-8"
         >
           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em]">
-            SR INFOTECH &bull; DUBAI, UAE
+            SR INFOTECH UAE &bull; DUBAI, UAE
           </p>
         </motion.div>
       </div>

@@ -338,7 +338,7 @@ export const Suppliers: React.FC = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      doc.text("SR INFOTECH", 15, 18);
+      doc.text("SR INFOTECH UAE", 15, 18);
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -547,7 +547,7 @@ export const Suppliers: React.FC = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(28);
       doc.setFont("helvetica", "bold");
-      doc.text("SR INFOTECH", 15, 18);
+      doc.text("SR INFOTECH UAE", 15, 18);
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -716,7 +716,7 @@ export const Suppliers: React.FC = () => {
           const totalPages = doc.getNumberOfPages();
           doc.setFontSize(8);
           doc.setTextColor(148, 163, 184);
-          const footerText = `SR INFOTECH CORPORATE STATEMENT | PAGE ${doc.getNumberOfPages()} OF ${totalPages} | CONFIDENTIAL AUDIT REPORT`;
+          const footerText = `SR INFOTECH UAE CORPORATE STATEMENT | PAGE ${doc.getNumberOfPages()} OF ${totalPages} | CONFIDENTIAL AUDIT REPORT`;
           doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
         }
       });
@@ -800,7 +800,7 @@ export const Suppliers: React.FC = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      doc.text("SR INFOTECH", 15, 18);
+      doc.text("SR INFOTECH UAE", 15, 18);
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -924,7 +924,7 @@ export const Suppliers: React.FC = () => {
     setIsExporting('excel');
     setTimeout(() => {
       const header = [
-        ["SR INFOTECH - SUPPLIER STATEMENT"],
+        ["SR INFOTECH UAE - SUPPLIER STATEMENT"],
         ["Supplier Name", selectedSupplierForReport.name.toUpperCase()],
         ["Report Date", new Date().toLocaleString()],
         ["Report Period", reportType.toUpperCase()],

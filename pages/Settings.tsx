@@ -52,15 +52,20 @@ export const Settings: React.FC = () => {
   const [company, setCompany] = useState<CompanyProfile>(() => {
     const saved = localStorage.getItem('sr_company_profile');
     return saved ? JSON.parse(saved) : {
-      name: 'SR INFOTECH',
+      name: 'SR INFOTECH UAE',
       logo: 'https://raw.githubusercontent.com/connectcloudonetech-hash/cloudoneuae/refs/heads/main/images/logo-512.png',
-      email: 'info@srinfotech.com',
-      phone: '+91 98765 43210',
-      address: 'Industrial Area, Mumbai, India'
+      email: 'connectcloudonetech@gmail.com',
+      phone: '+971 555791308',
+      address: 'Deira, Dubai, UAE'
     };
   });
   const [securityPin, setSecurityPin] = useState(() => localStorage.getItem('sr_security_pin') || '');
   const [isFingerprintEnabled, setIsFingerprintEnabled] = useState(() => localStorage.getItem('sr_fingerprint') === 'true');
+  const [isSettingPin, setIsSettingPin] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [pinStep, setPinStep] = useState<'verify' | 'enter' | 'confirm' | 'remove'>('enter');
+  const [firstPin, setFirstPin] = useState('');
+  const [pinError, setPinError] = useState('');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isWiping, setIsWiping] = useState(false);
@@ -190,6 +195,55 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const handlePinNumber = (num: string) => {
+    if (pinInput.length < 4) {
+      const newPin = pinInput + num;
+      setPinInput(newPin);
+      
+      if (newPin.length === 4) {
+        if (pinStep === 'verify' || pinStep === 'remove') {
+          if (newPin === securityPin) {
+            setPinInput('');
+            if (pinStep === 'remove') {
+              setSecurityPin('');
+              setIsSettingPin(false);
+              setPinStep('enter');
+            } else {
+              setPinStep('enter');
+            }
+          } else {
+            setPinError('INCORRECT PIN');
+            setPinInput('');
+            setTimeout(() => setPinError(''), 1500);
+          }
+        } else if (pinStep === 'enter') {
+          setFirstPin(newPin);
+          setPinInput('');
+          setPinStep('confirm');
+        } else {
+          if (newPin === firstPin) {
+            setSecurityPin(newPin);
+            setIsSettingPin(false);
+            setPinInput('');
+            setPinStep('enter');
+            setFirstPin('');
+          } else {
+            setPinError('PINS DO NOT MATCH');
+            setPinInput('');
+            setTimeout(() => setPinError(''), 1500);
+          }
+        }
+      }
+    }
+  };
+
+  const handleLockApp = () => {
+    if (!securityPin) {
+      alert('PLEASE SET A PIN FIRST');
+      return;
+    }
+    window.location.reload();
+  };
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
@@ -528,42 +582,124 @@ export const Settings: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Lock className="text-slate-400" size={18} />
-                    <p className="font-black text-slate-900 uppercase tracking-tight text-xs">4-Digit PIN</p>
-                  </div>
-                  <div className={`w-12 h-6 rounded-full p-1 transition-colors cursor-pointer ${securityPin ? 'bg-emerald-500' : 'bg-slate-200'}`} onClick={() => !securityPin && setSecurityPin('1234')}>
-                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${securityPin ? 'translate-x-6' : 'translate-x-0'}`} />
-                  </div>
-                </div>
-                {securityPin && (
-                  <div className="flex gap-2">
+              {isSettingPin ? (
+                <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl text-center">
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-2">
+                    {pinStep === 'verify' ? 'Verify Old PIN' : pinStep === 'remove' ? 'Remove PIN' : pinStep === 'enter' ? 'Set New PIN' : 'Confirm PIN'}
+                  </h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-8">
+                    {pinError || (pinStep === 'verify' || pinStep === 'remove' ? 'Enter current 4-digit code' : pinStep === 'enter' ? 'Enter a 4-digit security code' : 'Re-enter your code to confirm')}
+                  </p>
+                  
+                  <div className="flex justify-center gap-4 mb-10">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="flex-1 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-900 font-black text-lg border border-slate-100">
-                        *
-                      </div>
+                      <div 
+                        key={i} 
+                        className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+                          pinInput.length >= i ? 'bg-indigo-600 border-indigo-600 scale-125' : 'bg-transparent border-slate-200'
+                        }`}
+                      />
                     ))}
-                    <button onClick={() => setSecurityPin('')} className="p-3 text-rose-500 active:scale-90 transition-transform">
-                      <X size={20} />
-                    </button>
                   </div>
-                )}
-              </div>
 
-              <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Fingerprint className="text-slate-400" size={18} />
-                  <p className="font-black text-slate-900 uppercase tracking-tight text-xs">Biometric Lock</p>
+                  <div className="grid grid-cols-3 gap-4 max-w-[240px] mx-auto">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 'C', 0, 'X'].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => {
+                          if (num === 'C') setPinInput('');
+                          else if (num === 'X') {
+                            setIsSettingPin(false);
+                            setPinInput('');
+                            setPinStep('enter');
+                          }
+                          else handlePinNumber(num.toString());
+                        }}
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-lg transition-all active:scale-90 ${
+                          num === 'X' ? 'bg-rose-50 text-rose-500' : 
+                          num === 'C' ? 'bg-slate-50 text-slate-400' : 
+                          'bg-slate-50 text-slate-900 active:bg-indigo-600 active:text-white shadow-sm'
+                        }`}
+                      >
+                        {num === 'X' ? <X size={20} /> : num}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div 
-                  className={`w-12 h-6 rounded-full p-1 transition-colors cursor-pointer ${isFingerprintEnabled ? 'bg-emerald-500' : 'bg-slate-200'}`}
-                  onClick={() => setIsFingerprintEnabled(!isFingerprintEnabled)}
-                >
-                  <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isFingerprintEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Lock className="text-slate-400" size={18} />
+                        <p className="font-black text-slate-900 uppercase tracking-tight text-xs">4-Digit PIN Lock</p>
+                      </div>
+                      <div 
+                        className={`w-12 h-6 rounded-full p-1 transition-colors cursor-pointer ${securityPin ? 'bg-emerald-500' : 'bg-slate-200'}`} 
+                        onClick={() => {
+                          if (securityPin) {
+                            setPinStep('remove');
+                            setIsSettingPin(true);
+                          } else {
+                            setPinStep('enter');
+                            setIsSettingPin(true);
+                          }
+                        }}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${securityPin ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </div>
+                    </div>
+                    
+                    {securityPin ? (
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-900 font-black text-xs border border-slate-100">
+                              *
+                            </div>
+                          ))}
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setPinStep('verify');
+                            setIsSettingPin(true);
+                          }}
+                          className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
+                        >
+                          Change PIN
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                        Enable PIN to protect your data when the app starts.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Fingerprint className="text-slate-400" size={18} />
+                      <p className="font-black text-slate-900 uppercase tracking-tight text-xs">Biometric Lock</p>
+                    </div>
+                    <div 
+                      className={`w-12 h-6 rounded-full p-1 transition-colors cursor-pointer ${isFingerprintEnabled ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                      onClick={() => setIsFingerprintEnabled(!isFingerprintEnabled)}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isFingerprintEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </div>
+                  </div>
+
+                  {securityPin && (
+                    <button 
+                      onClick={handleLockApp}
+                      className="w-full p-5 bg-indigo-600 text-white rounded-[28px] flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs active:scale-95 transition-transform shadow-lg shadow-indigo-100"
+                    >
+                      <Lock size={18} />
+                      Lock Application Now
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         );
@@ -580,13 +716,13 @@ export const Settings: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <a href="tel:+919876543210" className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm text-center active:scale-95 transition-transform">
+              <a href="tel:+971555791309" className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm text-center active:scale-95 transition-transform">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Call Us</p>
-                <p className="text-xs font-black text-slate-900">+91 98765 43210</p>
+                <p className="text-xs font-black text-slate-900">+971 555791309</p>
               </a>
-              <a href="mailto:support@srinfotech.com" className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm text-center active:scale-95 transition-transform">
+              <a href="mailto:info@cloudonetechuae.com" className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm text-center active:scale-95 transition-transform">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email Us</p>
-                <p className="text-xs font-black text-slate-900">support@sr.com</p>
+                <p className="text-xs font-black text-slate-900">info@cloudonetechuae.com</p>
               </a>
             </div>
 

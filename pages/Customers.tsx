@@ -347,7 +347,7 @@ export const Customers: React.FC = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      doc.text("SR INFOTECH", 15, 18);
+      doc.text("SR INFOTECH UAE", 15, 18);
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -521,7 +521,7 @@ export const Customers: React.FC = () => {
         doc.setFontSize(8);
         doc.setTextColor(148, 163, 184);
         doc.text(
-          `SR INFOTECH - PAGE ${i} OF ${pageCount}`,
+          `SR INFOTECH UAE - PAGE ${i} OF ${pageCount}`,
           pageWidth / 2,
           pageHeight - 10,
           { align: 'center' }
@@ -557,7 +557,7 @@ export const Customers: React.FC = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(28);
       doc.setFont("helvetica", "bold");
-      doc.text("SR INFOTECH", 15, 18);
+      doc.text("SR INFOTECH UAE", 15, 18);
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -726,7 +726,7 @@ export const Customers: React.FC = () => {
           const totalPages = doc.getNumberOfPages();
           doc.setFontSize(8);
           doc.setTextColor(148, 163, 184);
-          const footerText = `SR INFOTECH CORPORATE STATEMENT | PAGE ${doc.getNumberOfPages()} OF ${totalPages} | CONFIDENTIAL AUDIT REPORT`;
+          const footerText = `SR INFOTECH UAE CORPORATE STATEMENT | PAGE ${doc.getNumberOfPages()} OF ${totalPages} | CONFIDENTIAL AUDIT REPORT`;
           doc.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
         }
       });
@@ -810,7 +810,7 @@ export const Customers: React.FC = () => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      doc.text("SR INFOTECH", 15, 18);
+      doc.text("SR INFOTECH UAE", 15, 18);
       
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
@@ -934,7 +934,7 @@ export const Customers: React.FC = () => {
     setIsExporting('excel');
     setTimeout(() => {
       const header = [
-        ["SR INFOTECH - CUSTOMER STATEMENT"],
+        ["SR INFOTECH UAE - CUSTOMER STATEMENT"],
         ["Customer Name", selectedCustomerForReport.name.toUpperCase()],
         ["Report Date", new Date().toLocaleString()],
         ["Report Period", reportType.toUpperCase()],
