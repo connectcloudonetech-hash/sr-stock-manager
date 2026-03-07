@@ -14,9 +14,10 @@ import {
   TrendingUp,
   TrendingDown,
   Package,
-  RefreshCw
+  RefreshCw,
+  Edit3
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { stockService } from '../lib/services/stockService';
 import { StockMovement, MovementType, Customer, Supplier } from '../types';
@@ -27,6 +28,7 @@ type CategoryPeriod = 'ALL' | 'TODAY' | 'WEEK' | 'MONTH' | 'YEAR';
 type CategoryTypeFilter = 'BOTH' | MovementType.IN | MovementType.OUT;
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -121,6 +123,11 @@ export const Dashboard: React.FC = () => {
       return suppliers.find(v => v.id === m.supplier_id)?.name || m.supplier_id || 'INTERNAL';
     }
     return customers.find(c => c.id === m.customer_id)?.name || m.customer_id || 'INTERNAL';
+  };
+
+  const handleEdit = (m: StockMovement) => {
+    const path = m.type === MovementType.IN ? `/carry-in/${m.id}` : `/carry-out/${m.id}`;
+    navigate(path);
   };
 
   if (loading) return <DashboardSkeleton />;
@@ -341,7 +348,8 @@ export const Dashboard: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-soft flex items-center justify-between active:bg-slate-50 transition-all group hover:border-slate-200"
+              onClick={() => handleEdit(m)}
+              className="bg-white p-5 rounded-[32px] border border-slate-100 shadow-soft flex items-center justify-between active:bg-slate-50 transition-all group hover:border-slate-200 cursor-pointer"
             >
               <div className="flex items-center gap-5">
                 <div className={cn(
@@ -351,7 +359,10 @@ export const Dashboard: React.FC = () => {
                   {m.type === MovementType.IN ? <ArrowDownCircle size={28} /> : <ArrowUpCircle size={28} />}
                 </div>
                 <div>
-                  <p className="text-base font-black text-slate-900 tracking-tight uppercase">{m.category}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-base font-black text-slate-900 tracking-tight uppercase">{m.category}</p>
+                    <Edit3 size={12} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest flex items-center gap-2">
                     <span className="text-slate-300">{new Date(m.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
                     <span className="w-1 h-1 bg-slate-200 rounded-full" />

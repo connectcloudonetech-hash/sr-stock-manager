@@ -1,19 +1,21 @@
 
-import React, { useState } from 'react';
-import { UserPlus, Edit2, Trash2, Shield, User as UserIcon, Check, Lock, X, Database, AlertTriangle, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UserPlus, Edit2, Trash2, Shield, User as UserIcon, Check, Lock, X, Database, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 import { UserRole, UserProfile } from '../types';
 import { stockService } from '../lib/services/stockService';
 
 export const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<UserProfile[]>([
-    { id: '1', username: 'ADMIN', role: UserRole.ADMIN, full_name: 'ADMINISTRATOR' },
-    { id: '2', username: 'MANAGER1', role: UserRole.MANAGER, full_name: 'STORE MANAGER' },
-    { id: '3', username: 'STAFF1', role: UserRole.STAFF, full_name: 'FRONT DESK STAFF' },
-  ]);
-
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+
   const [newUser, setNewUser] = useState({
     username: '',
     password: '',
@@ -21,17 +23,68 @@ export const UserManagement: React.FC = () => {
     full_name: '',
   });
 
-  const handleAddUser = (e: React.FormEvent) => {
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    setLoading(true);
+    const data = await stockService.getUsers();
+    setUsers(data);
+    setLoading(false);
+  };
+
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    const created: UserProfile = {
-      id: Math.random().toString(36).substr(2, 9),
-      username: newUser.username.toUpperCase(),
-      full_name: newUser.full_name.toUpperCase(),
-      role: newUser.role,
-    };
-    setUsers([...users, created]);
-    setIsAdding(false);
-    setNewUser({ username: '', password: '', role: UserRole.STAFF, full_name: '' });
+    setIsSubmitting(true);
+    try {
+      const created = await stockService.addUser({
+        username: newUser.username.toUpperCase(),
+        full_name: newUser.full_name.toUpperCase(),
+        role: newUser.role,
+        password: newUser.password
+      });
+      setUsers([...users, created]);
+      setIsAdding(false);
+      setNewUser({ username: '', password: '', role: UserRole.STAFF, full_name: '' });
+    } catch (err) {
+      alert('Error adding user');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (id === '1' || users.find(u => u.id === id)?.username === 'ADMIN') {
+      alert('Cannot delete the primary administrator account.');
+      return;
+    }
+    
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      try {
+        await stockService.deleteUser(id);
+        setUsers(users.filter(u => u.id !== id));
+      } catch (err) {
+        alert('Error deleting user');
+      }
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!editingUser || !newPassword) return;
+    setIsSubmitting(true);
+    try {
+      await stockService.updateUser(editingUser.id, { password: newPassword });
+      alert('Password updated successfully');
+      setIsChangingPassword(false);
+      setNewPassword('');
+      setEditingUser(null);
+      loadUsers();
+    } catch (err) {
+      alert('Error updating password');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClearAllData = async () => {
@@ -39,7 +92,7 @@ export const UserManagement: React.FC = () => {
     try {
       await stockService.clearAllData();
       alert('All system data has been cleared successfully.');
-      window.location.reload(); // Refresh to clear all states
+      window.location.reload();
     } catch (err) {
       alert('Error clearing data');
     } finally {
@@ -47,6 +100,14 @@ export const UserManagement: React.FC = () => {
       setShowClearConfirm(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="animate-spin text-blue-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-24">
@@ -132,8 +193,10 @@ export const UserManagement: React.FC = () => {
             <div className="pt-2 flex gap-3">
               <button 
                 type="submit" 
-                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl active:scale-95 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest text-xs"
+                disabled={isSubmitting}
+                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl active:scale-95 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest text-xs flex items-center justify-center"
               >
+                {isSubmitting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
                 Confirm
               </button>
               <button 
@@ -145,6 +208,51 @@ export const UserManagement: React.FC = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {isChangingPassword && editingUser && (
+        <div className="bg-white p-6 rounded-[32px] border border-blue-50 shadow-soft animate-in zoom-in duration-300">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">Change Password</h2>
+            <button onClick={() => setIsChangingPassword(false)} className="p-2 text-slate-400 hover:bg-slate-50 rounded-full transition">
+              <X size={20} />
+            </button>
+          </div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Updating password for: {editingUser.full_name}</p>
+          
+          <div className="space-y-5">
+            <div className="floating-label-group">
+              <input 
+                required
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="input-mobile"
+                placeholder=" "
+                autoFocus
+              />
+              <label className="floating-label">New Password</label>
+            </div>
+
+            <div className="pt-2 flex gap-3">
+              <button 
+                onClick={handleUpdatePassword}
+                disabled={isSubmitting || !newPassword}
+                className="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl active:scale-95 transition-all shadow-lg shadow-blue-100 uppercase tracking-widest text-xs flex items-center justify-center disabled:opacity-50"
+              >
+                {isSubmitting ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+                Update Password
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setIsChangingPassword(false)} 
+                className="px-6 py-4 bg-slate-100 text-slate-600 font-black rounded-2xl active:scale-95 transition-all uppercase tracking-widest text-xs"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -161,10 +269,19 @@ export const UserManagement: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <button className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"><Edit2 size={16} /></button>
+              <button 
+                className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                onClick={() => {
+                  setEditingUser(u);
+                  setIsChangingPassword(true);
+                  setNewPassword('');
+                }}
+              >
+                <Lock size={16} />
+              </button>
               <button 
                 className="p-3 text-rose-400 hover:bg-rose-50 rounded-xl transition-all"
-                onClick={() => setUsers(users.filter(x => x.id !== u.id))}
+                onClick={() => handleDeleteUser(u.id)}
               >
                 <Trash2 size={16} />
               </button>

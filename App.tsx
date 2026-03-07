@@ -19,7 +19,7 @@ import { SplashScreen } from './components/SplashScreen';
 // Mock Auth Context for Demo
 interface AuthContextType {
   user: UserProfile | null;
-  login: (username: string, role: UserRole) => void;
+  login: (profile: UserProfile) => void;
   logout: () => void;
   loading: boolean;
 }
@@ -44,13 +44,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     setLoading(false);
   }, []);
 
-  const login = (username: string, role: UserRole) => {
-    const profile: UserProfile = {
-      id: '1',
-      username,
-      role,
-      full_name: username.charAt(0).toUpperCase() + username.slice(1),
-    };
+  const login = (profile: UserProfile) => {
     setUser(profile);
     localStorage.setItem('sr_infotech_user', JSON.stringify(profile));
   };

@@ -10,6 +10,7 @@ export interface UserProfile {
   username: string;
   role: UserRole;
   full_name: string;
+  password?: string;
 }
 
 // Added Product interface to fix error in pages/Products.tsx

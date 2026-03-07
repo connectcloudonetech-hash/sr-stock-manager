@@ -20,7 +20,8 @@ import {
   File as FilePdf,
   Activity,
   Banknote,
-  Users
+  Users,
+  Edit3
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -30,12 +31,13 @@ import { Customer, Supplier, StockMovement, MovementType } from '../types';
 import { StatementSkeleton } from '../components/Skeleton';
 import { formatCurrency } from '../lib/utils';
 
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 type ReportTab = 'TODAY' | 'MONTHLY' | 'PARTY' | 'CATEGORY' | 'TYPE' | 'CUSTOM' | 'STOCK_REPORT' | 'SUPPLIER_REPORT' | 'CUSTOMER_REPORT';
 
 export const Reports: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ReportTab>((searchParams.get('tab') as ReportTab) || 'TODAY');
   const [loading, setLoading] = useState(true);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -592,6 +594,11 @@ export const Reports: React.FC = () => {
     }, 800);
   };
 
+  const handleEdit = (m: StockMovement) => {
+    const path = m.type === MovementType.IN ? `/carry-in/${m.id}` : `/carry-out/${m.id}`;
+    navigate(path);
+  };
+
   if (loading) return <StatementSkeleton />;
 
   return (
@@ -749,13 +756,20 @@ export const Reports: React.FC = () => {
           </div>
         ) : (
           filteredMovements.map((m, idx) => (
-            <div key={m.id} className="bg-white p-5 rounded-[32px] border border-slate-50 shadow-soft flex items-center justify-between active:scale-[0.98] transition-all">
+            <div 
+              key={m.id} 
+              onClick={() => handleEdit(m)}
+              className="bg-white p-5 rounded-[32px] border border-slate-50 shadow-soft flex items-center justify-between active:scale-[0.98] transition-all cursor-pointer group"
+            >
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${m.type === MovementType.IN ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                   {m.type === MovementType.IN ? <ArrowDownCircle size={20} /> : <ArrowUpCircle size={20} />}
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-slate-900 uppercase leading-tight">{m.category}</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-black text-slate-900 uppercase leading-tight">{m.category}</h4>
+                    <Edit3 size={12} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                     {new Date(m.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} • {getPartyName(m)}
                   </p>

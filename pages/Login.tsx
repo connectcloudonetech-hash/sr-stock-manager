@@ -5,6 +5,7 @@ import { Lock, User, Loader2, AlertCircle, ChevronRight } from 'lucide-react';
 import { useAuth } from '../App';
 import { UserRole } from '../types';
 import { cn } from '../lib/utils';
+import { stockService } from '../lib/services/stockService';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -21,19 +22,24 @@ export const Login: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    // Simulate API delay
-    setTimeout(() => {
-      if (username === 'admin' && password === 'admin') {
-        login('admin', UserRole.ADMIN);
-        navigate('/dashboard');
-      } else if (username === 'staff' && password === 'staff') {
-        login('staff', UserRole.STAFF);
+    try {
+      const users = await stockService.getUsers();
+      const user = users.find(u => 
+        u.username.toUpperCase() === username.toUpperCase() && 
+        u.password === password
+      );
+
+      if (user) {
+        login(user);
         navigate('/dashboard');
       } else {
-        setError('Invalid username or password. Try admin/admin.');
+        setError('Invalid username or password. Default is ADMIN/123');
         setLoading(false);
       }
-    }, 1000);
+    } catch (err) {
+      setError('Connection error. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (

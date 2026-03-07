@@ -1,5 +1,5 @@
 
-import { MovementType, StockMovement, Customer, Supplier, Product } from '../../types';
+import { MovementType, StockMovement, Customer, Supplier, Product, UserProfile, UserRole } from '../../types';
 import { supabase, isSupabaseConfigured } from '../supabase';
 
 const STORAGE_KEYS = {
@@ -8,7 +8,8 @@ const STORAGE_KEYS = {
   CUSTOMERS: 'sr_storage_v3_customers',
   SUPPLIERS: 'sr_storage_v3_suppliers',
   PRODUCTS: 'sr_storage_v3_products',
-  CATEGORIES: 'sr_storage_v3_categories'
+  CATEGORIES: 'sr_storage_v3_categories',
+  USERS: 'sr_storage_v3_users'
 };
 
 const INITIAL_CATEGORIES = [
@@ -443,11 +444,96 @@ export const stockService = {
         await supabase.from('suppliers').delete().neq('id', '0');
         await supabase.from('customers').delete().neq('id', '0');
         await supabase.from('categories').delete().neq('name', 'OTHERS');
+        await supabase.from('users').delete().neq('username', 'ADMIN');
       } catch (err) {
         console.error('Supabase clearAllData network error:', err);
       }
     }
     localStorage.clear();
     return { success: true };
+  },
+
+  // User Management
+  getUsers: async (): Promise<UserProfile[]> => {
+    const defaultUsers: UserProfile[] = [
+      { id: '1', username: 'ADMIN', role: UserRole.ADMIN, full_name: 'ADMINISTRATOR', password: '123' }
+    ];
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.from('users').select('*').order('username');
+        if (error) {
+          console.error('Supabase getUsers API error:', error.message);
+        } else if (data && data.length > 0) {
+          return data;
+        }
+      } catch (err) {
+        console.error('Supabase getUsers network error:', err);
+      }
+    }
+    return getStorageData<UserProfile[]>(STORAGE_KEYS.USERS, defaultUsers);
+  },
+
+  addUser: async (user: Omit<UserProfile, 'id'>): Promise<UserProfile> => {
+    const newId = Math.random().toString(36).substr(2, 9);
+    const newUser: UserProfile = { ...user, id: newId };
+
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.from('users').insert(newUser).select().single();
+        if (error) {
+          console.error('Supabase addUser API error:', error.message);
+        } else if (data) {
+          return data;
+        }
+      } catch (err) {
+        console.error('Supabase addUser network error:', err);
+      }
+    }
+
+    const users = await stockService.getUsers();
+    const updated = [...users, newUser];
+    setStorageData(STORAGE_KEYS.USERS, updated);
+    return newUser;
+  },
+
+  updateUser: async (id: string, data: Partial<UserProfile>): Promise<boolean> => {
+    if (isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase.from('users').update(data).eq('id', id);
+        if (error) {
+          console.error('Supabase updateUser API error:', error.message);
+        } else {
+          return true;
+        }
+      } catch (err) {
+        console.error('Supabase updateUser network error:', err);
+      }
+    }
+
+    const users = await stockService.getUsers();
+    const updated = users.map(u => u.id === id ? { ...u, ...data } : u);
+    setStorageData(STORAGE_KEYS.USERS, updated);
+    return true;
+  },
+
+  deleteUser: async (id: string): Promise<boolean> => {
+    if (isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase.from('users').delete().eq('id', id);
+        if (error) {
+          console.error('Supabase deleteUser API error:', error.message);
+        } else {
+          return true;
+        }
+      } catch (err) {
+        console.error('Supabase deleteUser network error:', err);
+      }
+    }
+
+    const users = await stockService.getUsers();
+    const updated = users.filter(u => u.id !== id);
+    setStorageData(STORAGE_KEYS.USERS, updated);
+    return true;
   }
 };

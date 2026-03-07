@@ -50,6 +50,21 @@ CREATE TABLE stock_movements (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   created_by TEXT
 );
+
+-- Create Users table
+CREATE TABLE users (
+  id TEXT PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE,
+  full_name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'staff')),
+  password TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insert default admin
+INSERT INTO users (id, username, full_name, role, password)
+VALUES ('1', 'ADMIN', 'ADMINISTRATOR', 'admin', '123')
+ON CONFLICT (username) DO NOTHING;
 ```
 
 ## 2. Environment Variables
