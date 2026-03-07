@@ -22,7 +22,7 @@ import { motion } from 'motion/react';
 import { stockService } from '../lib/services/stockService';
 import { StockMovement, MovementType, Customer, Supplier } from '../types';
 import { DashboardSkeleton } from '../components/Skeleton';
-import { cn } from '../lib/utils';
+import { cn, formatCurrency } from '../lib/utils';
 
 type CategoryPeriod = 'ALL' | 'TODAY' | 'WEEK' | 'MONTH' | 'YEAR';
 type CategoryTypeFilter = 'BOTH' | MovementType.IN | MovementType.OUT;
@@ -377,7 +377,14 @@ export const Dashboard: React.FC = () => {
                 )}>
                   {m.type === MovementType.IN ? '+' : '-'}{m.nos}
                 </p>
-                <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] mt-2">Units</p>
+                <div className="flex flex-col items-end mt-2">
+                  <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Units</p>
+                  {m.unit_price && (
+                    <p className="text-[8px] font-black text-slate-200 uppercase tracking-widest mt-1">
+                      @{formatCurrency(m.unit_price)}
+                    </p>
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}
@@ -395,4 +402,3 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
-

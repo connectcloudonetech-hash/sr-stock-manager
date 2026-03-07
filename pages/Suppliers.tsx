@@ -528,7 +528,7 @@ export const Suppliers: React.FC = () => {
     setIsExporting('pdf');
     
     setTimeout(() => {
-      const doc = new jsPDF('p', 'mm', 'a4');
+      const doc = new jsPDF('l', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       
@@ -637,25 +637,23 @@ export const Suppliers: React.FC = () => {
       doc.text(`PENDING: ${supplierStats.pendingAmount.toLocaleString()}`, 160, totalsY + 18);
 
       // --- MAIN TRANSACTION TABLE ---
-      const tableColumn = ["DATE", "CATEGORY", "IN QTY", "OUT QTY", "IN AMOUNT", "OUT AMOUNT", "BALANCE QTY"];
+      const tableColumn = ["DATE", "CATEGORY", "REMARKS", "IN QTY", "OUT QTY", "UNIT PRICE", "IN AMOUNT", "OUT AMOUNT"];
       
-      let runningQty = 0;
       const tableRows = sortedMovements.map(m => {
         const inQty = m.type === MovementType.IN ? m.nos : 0;
         const outQty = m.type === MovementType.OUT ? m.nos : 0;
         const inAmt = m.type === MovementType.IN ? (m.amount || 0) : 0;
         const outAmt = m.type === MovementType.OUT ? (m.amount || 0) : 0;
         
-        runningQty += (inQty - outQty);
-
         return [
           m.date,
           m.category.toUpperCase(),
+          (m.remarks || '').toUpperCase(),
           inQty > 0 ? inQty : '-',
           outQty > 0 ? outQty : '-',
+          m.unit_price ? m.unit_price.toLocaleString() : '-',
           inAmt > 0 ? inAmt.toLocaleString() : '-',
-          outAmt > 0 ? outAmt.toLocaleString() : '-',
-          runningQty
+          outAmt > 0 ? outAmt.toLocaleString() : '-'
         ];
       });
 
@@ -672,11 +670,12 @@ export const Suppliers: React.FC = () => {
         foot: [[
           'TOTAL', 
           '', 
+          '',
           totalInQty, 
           totalOutQty, 
+          '',
           totalInAmt.toLocaleString(), 
-          totalOutAmt.toLocaleString(), 
-          runningQty
+          totalOutAmt.toLocaleString()
         ]],
         theme: 'grid',
         styles: {
@@ -705,12 +704,13 @@ export const Suppliers: React.FC = () => {
         },
         columnStyles: {
           0: { cellWidth: 20 },
-          1: { cellWidth: 'auto', fontStyle: 'bold' },
-          2: { cellWidth: 15, halign: 'center', textColor: [16, 185, 129], fontStyle: 'bold' },
-          3: { cellWidth: 15, halign: 'center', textColor: [225, 29, 72], fontStyle: 'bold' },
-          4: { cellWidth: 25, halign: 'right', textColor: [16, 185, 129] },
-          5: { cellWidth: 25, halign: 'right', textColor: [225, 29, 72] },
-          6: { cellWidth: 20, halign: 'center', fontStyle: 'bold' }
+          1: { cellWidth: 30 },
+          2: { cellWidth: 'auto' },
+          3: { cellWidth: 15, halign: 'center', textColor: [16, 185, 129], fontStyle: 'bold' },
+          4: { cellWidth: 15, halign: 'center', textColor: [225, 29, 72], fontStyle: 'bold' },
+          5: { cellWidth: 20, halign: 'right' },
+          6: { cellWidth: 25, halign: 'right', textColor: [16, 185, 129] },
+          7: { cellWidth: 25, halign: 'right', textColor: [225, 29, 72] }
         },
         didDrawPage: (data) => {
           const totalPages = doc.getNumberOfPages();
@@ -1293,7 +1293,14 @@ export const Suppliers: React.FC = () => {
                           </div>
                           <div className="text-right">
                             <p className="text-sm font-black text-slate-900 leading-none">{m.nos} PCS</p>
-                            <p className="text-[10px] font-bold text-slate-400 mt-1">{formatCurrency(m.amount || 0)}</p>
+                            <div className="flex flex-col items-end mt-1">
+                              <p className="text-[10px] font-bold text-slate-400">{formatCurrency(m.amount || 0)}</p>
+                              {m.unit_price && (
+                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-0.5">
+                                  @{formatCurrency(m.unit_price)}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </div>
                         

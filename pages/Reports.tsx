@@ -29,7 +29,7 @@ import * as XLSX from 'xlsx';
 import { stockService } from '../lib/services/stockService';
 import { Customer, Supplier, StockMovement, MovementType } from '../types';
 import { StatementSkeleton } from '../components/Skeleton';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, cn } from '../lib/utils';
 
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
@@ -133,10 +133,10 @@ export const Reports: React.FC = () => {
       .filter(m => m.type === MovementType.OUT)
       .reduce((sum, m) => sum + m.nos, 0);
     const cashIn = filteredMovements
-      .filter(m => m.type === MovementType.OUT)
+      .filter(m => m.type === MovementType.IN)
       .reduce((sum, m) => sum + (m.amount || 0), 0);
     const cashOut = filteredMovements
-      .filter(m => m.type === MovementType.IN)
+      .filter(m => m.type === MovementType.OUT)
       .reduce((sum, m) => sum + (m.amount || 0), 0);
     
     return {
@@ -170,7 +170,7 @@ export const Reports: React.FC = () => {
     setIsExporting('pdf');
     
     setTimeout(() => {
-      const doc = new jsPDF('p', 'mm', 'a4');
+      const doc = new jsPDF('l', 'mm', 'a4');
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       
@@ -248,34 +248,32 @@ export const Reports: React.FC = () => {
       doc.setFontSize(10);
       doc.text("OVERALL TOTALS (CASH):", 20, totalsY + 18);
       doc.setFontSize(9);
-      doc.text(`CASH IN: ${stats.cashIn.toLocaleString()}`, 80, totalsY + 18);
-      doc.text(`CASH OUT: ${stats.cashOut.toLocaleString()}`, 120, totalsY + 18);
+      doc.text(`TOTAL IN AMOUNT: ${stats.cashIn.toLocaleString()}`, 80, totalsY + 18);
+      doc.text(`TOTAL OUT AMOUNT: ${stats.cashOut.toLocaleString()}`, 140, totalsY + 18);
       
       if (stats.netCash >= 0) doc.setTextColor(16, 185, 129);
       else doc.setTextColor(225, 29, 72);
-      doc.text(`BALANCE: ${stats.netCash.toLocaleString()}`, 160, totalsY + 18);
+      doc.text(`BALANCE PROFIT: ${stats.netCash.toLocaleString()}`, 210, totalsY + 18);
 
       // --- MAIN TRANSACTION TABLE ---
-      const tableColumn = ["DATE", "PARTY NAME", "CATEGORY", "IN QTY", "OUT QTY", "IN AMOUNT", "OUT AMOUNT", "BALANCE QTY"];
+      const tableColumn = ["DATE", "PARTY NAME", "CATEGORY", "REMARKS", "IN QTY", "OUT QTY", "UNIT PRICE", "IN AMOUNT", "OUT AMOUNT"];
       
-      let runningQty = 0;
       const tableRows = sortedMovements.map(m => {
         const inQty = m.type === MovementType.IN ? m.nos : 0;
         const outQty = m.type === MovementType.OUT ? m.nos : 0;
         const inAmt = m.type === MovementType.IN ? (m.amount || 0) : 0;
         const outAmt = m.type === MovementType.OUT ? (m.amount || 0) : 0;
         
-        runningQty += (inQty - outQty);
-
         return [
           m.date,
           getPartyName(m).toUpperCase(),
           m.category.toUpperCase(),
+          (m.remarks || '').toUpperCase(),
           inQty > 0 ? inQty : '-',
           outQty > 0 ? outQty : '-',
+          m.unit_price ? m.unit_price.toLocaleString() : '-',
           inAmt > 0 ? inAmt.toLocaleString() : '-',
-          outAmt > 0 ? outAmt.toLocaleString() : '-',
-          runningQty
+          outAmt > 0 ? outAmt.toLocaleString() : '-'
         ];
       });
 
@@ -293,11 +291,12 @@ export const Reports: React.FC = () => {
           'TOTAL', 
           '', 
           '', 
+          '',
           totalInQty, 
           totalOutQty, 
+          '',
           totalInAmt.toLocaleString(), 
-          totalOutAmt.toLocaleString(), 
-          runningQty
+          totalOutAmt.toLocaleString()
         ]],
         theme: 'grid',
         styles: {
@@ -326,13 +325,14 @@ export const Reports: React.FC = () => {
         },
         columnStyles: {
           0: { cellWidth: 20 },
-          1: { cellWidth: 'auto', fontStyle: 'bold' },
-          2: { cellWidth: 20 },
-          3: { cellWidth: 15, halign: 'center', textColor: [16, 185, 129], fontStyle: 'bold' },
-          4: { cellWidth: 15, halign: 'center', textColor: [225, 29, 72], fontStyle: 'bold' },
-          5: { cellWidth: 25, halign: 'right', textColor: [16, 185, 129] },
-          6: { cellWidth: 25, halign: 'right', textColor: [225, 29, 72] },
-          7: { cellWidth: 20, halign: 'center', fontStyle: 'bold' }
+          1: { cellWidth: 40, fontStyle: 'bold' },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 'auto' },
+          4: { cellWidth: 15, halign: 'center', textColor: [16, 185, 129], fontStyle: 'bold' },
+          5: { cellWidth: 15, halign: 'center', textColor: [225, 29, 72], fontStyle: 'bold' },
+          6: { cellWidth: 20, halign: 'right' },
+          7: { cellWidth: 25, halign: 'right', textColor: [16, 185, 129] },
+          8: { cellWidth: 25, halign: 'right', textColor: [225, 29, 72] }
         },
         didDrawPage: (data) => {
           const totalPages = doc.getNumberOfPages();
@@ -371,13 +371,12 @@ export const Reports: React.FC = () => {
         cat.toUpperCase(),
         vals.out,
         vals.in,
-        vals.in - vals.out,
-        (vals.amount || 0).toLocaleString()
+        vals.in - vals.out
       ]);
 
       autoTable(doc, {
         startY: currentSummaryY + 5,
-        head: [["CATEGORY", "TOTAL OUT", "TOTAL IN", "NET BALANCE", "TOTAL VALUE (INR)"]],
+        head: [["CATEGORY", "TOTAL OUT", "TOTAL IN", "NET BALANCE"]],
         body: summaryRows,
         theme: 'grid',
         styles: {
@@ -392,8 +391,7 @@ export const Reports: React.FC = () => {
         columnStyles: {
           1: { halign: 'center' },
           2: { halign: 'center' },
-          3: { halign: 'center' },
-          4: { halign: 'right' }
+          3: { halign: 'center' }
         },
         margin: { left: 15, right: 15 },
         didParseCell: (data) => {
@@ -731,12 +729,24 @@ export const Reports: React.FC = () => {
             <p className="text-xl font-black text-rose-600">{stats.totalOut}</p>
           </div>
           <div className="bg-white p-5 rounded-[32px] border border-slate-50 shadow-soft">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Cash In</p>
-            <p className="text-xl font-black text-slate-900">{formatCurrency(stats.cashIn)}</p>
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total In Amount</p>
+            <p className="text-xl font-black text-emerald-600">{formatCurrency(stats.cashIn)}</p>
           </div>
           <div className="bg-white p-5 rounded-[32px] border border-slate-50 shadow-soft">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Cash Out</p>
-            <p className="text-xl font-black text-slate-900">{formatCurrency(stats.cashOut)}</p>
+            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Out Amount</p>
+            <p className="text-xl font-black text-rose-600">{formatCurrency(stats.cashOut)}</p>
+          </div>
+          <div className="col-span-2 bg-slate-900 p-6 rounded-[32px] border border-slate-800 shadow-xl relative overflow-hidden group">
+            <div className="relative z-10">
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Balance Profit</p>
+              <p className={cn(
+                "text-2xl font-black tracking-tight",
+                stats.netCash >= 0 ? "text-emerald-400" : "text-rose-400"
+              )}>
+                {formatCurrency(stats.netCash)}
+              </p>
+            </div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-white/10 transition-colors duration-500" />
           </div>
         </div>
       </section>
@@ -779,7 +789,14 @@ export const Reports: React.FC = () => {
                 <p className={`text-sm font-black ${m.type === MovementType.IN ? 'text-emerald-600' : 'text-rose-600'}`}>
                   {m.type === MovementType.IN ? '+' : '-'}{m.nos}
                 </p>
-                <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">{formatCurrency(m.amount || 0)}</p>
+                <div className="flex flex-col items-end mt-0.5">
+                  <p className="text-[8px] font-bold text-slate-400 uppercase">{formatCurrency(m.amount || 0)}</p>
+                  {m.unit_price && (
+                    <p className="text-[7px] font-black text-slate-300 uppercase tracking-widest mt-0.5">
+                      @{formatCurrency(m.unit_price)}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           ))
