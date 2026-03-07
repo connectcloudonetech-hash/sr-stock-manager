@@ -1,6 +1,6 @@
 
 import { MovementType, StockMovement, Customer, Supplier, Product } from '../../types';
-import { supabase } from '../supabase';
+import { supabase, isSupabaseConfigured } from '../supabase';
 
 const STORAGE_KEYS = {
   SUPPLIER_MOVEMENTS: 'sr_storage_v4_supplier_movements',
@@ -21,24 +21,6 @@ const INITIAL_CATEGORIES = [
   'CPU',
   'OTHERS'
 ];
-
-// Helper to check if Supabase is configured
-const isSupabaseConfigured = () => {
-  const env = (import.meta as any).env;
-  const url = env?.VITE_SUPABASE_URL;
-  const key = env?.VITE_SUPABASE_ANON_KEY;
-  
-  // Check if variables exist and aren't just the placeholder strings from .env.example
-  const isConfigured = !!(
-    url && 
-    key && 
-    url !== 'your_supabase_project_url' && 
-    key !== 'your_supabase_anon_key' &&
-    url.startsWith('https://')
-  );
-  
-  return isConfigured;
-};
 
 // Helper to interact with LocalStorage
 const getStorageData = <T>(key: string, defaultValue: T): T => {
@@ -78,11 +60,15 @@ export const stockService = {
 
   getCustomers: async (): Promise<Customer[]> => {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('customers').select('*').order('name');
-      if (error) {
-        console.error('Supabase getCustomers error:', error.message, error.details);
-      } else if (data) {
-        return data;
+      try {
+        const { data, error } = await supabase.from('customers').select('*').order('name');
+        if (error) {
+          console.error('Supabase getCustomers API error:', error.message, error.details);
+        } else if (data) {
+          return data;
+        }
+      } catch (err) {
+        console.error('Supabase getCustomers network error:', err);
       }
     }
     return getStorageData<Customer[]>(STORAGE_KEYS.CUSTOMERS, []);
@@ -90,11 +76,15 @@ export const stockService = {
 
   getSuppliers: async (): Promise<Supplier[]> => {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('suppliers').select('*').order('name');
-      if (error) {
-        console.error('Supabase getSuppliers error:', error.message, error.details);
-      } else if (data) {
-        return data;
+      try {
+        const { data, error } = await supabase.from('suppliers').select('*').order('name');
+        if (error) {
+          console.error('Supabase getSuppliers API error:', error.message, error.details);
+        } else if (data) {
+          return data;
+        }
+      } catch (err) {
+        console.error('Supabase getSuppliers network error:', err);
       }
     }
     return getStorageData<Supplier[]>(STORAGE_KEYS.SUPPLIERS, []);
@@ -105,16 +95,20 @@ export const stockService = {
     const newId = `c-${Math.random().toString(36).substr(2, 5)}`;
     
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('customers').insert({ 
-        id: newId,
-        name: upperName, 
-        ...details 
-      }).select().single();
-      
-      if (error) {
-        console.error('Supabase addCustomer error:', error.message, error.details);
-      } else if (data) {
-        return data;
+      try {
+        const { data, error } = await supabase.from('customers').insert({ 
+          id: newId,
+          name: upperName, 
+          ...details 
+        }).select().single();
+        
+        if (error) {
+          console.error('Supabase addCustomer API error:', error.message, error.details);
+        } else if (data) {
+          return data;
+        }
+      } catch (err) {
+        console.error('Supabase addCustomer network error:', err);
       }
     }
     
@@ -133,16 +127,20 @@ export const stockService = {
     const newId = `s-${Math.random().toString(36).substr(2, 5)}`;
 
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('suppliers').insert({ 
-        id: newId,
-        name: upperName, 
-        ...details 
-      }).select().single();
-      
-      if (error) {
-        console.error('Supabase addSupplier error:', error.message, error.details);
-      } else if (data) {
-        return data;
+      try {
+        const { data, error } = await supabase.from('suppliers').insert({ 
+          id: newId,
+          name: upperName, 
+          ...details 
+        }).select().single();
+        
+        if (error) {
+          console.error('Supabase addSupplier API error:', error.message, error.details);
+        } else if (data) {
+          return data;
+        }
+      } catch (err) {
+        console.error('Supabase addSupplier network error:', err);
       }
     }
 
@@ -158,8 +156,13 @@ export const stockService = {
 
   getMovements: async (): Promise<StockMovement[]> => {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('stock_movements').select('*').order('date', { ascending: false });
-      if (!error && data) return data;
+      try {
+        const { data, error } = await supabase.from('stock_movements').select('*').order('date', { ascending: false });
+        if (!error && data) return data;
+        if (error) console.error('Supabase getMovements API error:', error.message);
+      } catch (err) {
+        console.error('Supabase getMovements network error:', err);
+      }
     }
     
     const [s, c] = await Promise.all([
@@ -187,11 +190,15 @@ export const stockService = {
     };
 
     if (isSupabaseConfigured()) {
-      const { data: result, error } = await supabase.from('stock_movements').insert(movementData).select().single();
-      if (error) {
-        console.error('Supabase recordSupplierMovement error:', error.message, error.details);
-      } else if (result) {
-        return { success: true, data: result };
+      try {
+        const { data: result, error } = await supabase.from('stock_movements').insert(movementData).select().single();
+        if (error) {
+          console.error('Supabase recordSupplierMovement API error:', error.message, error.details);
+        } else if (result) {
+          return { success: true, data: result };
+        }
+      } catch (err) {
+        console.error('Supabase recordSupplierMovement network error:', err);
       }
     }
 
@@ -222,11 +229,15 @@ export const stockService = {
     };
 
     if (isSupabaseConfigured()) {
-      const { data: result, error } = await supabase.from('stock_movements').insert(movementData).select().single();
-      if (error) {
-        console.error('Supabase recordCustomerMovement error:', error.message, error.details);
-      } else if (result) {
-        return { success: true, data: result };
+      try {
+        const { data: result, error } = await supabase.from('stock_movements').insert(movementData).select().single();
+        if (error) {
+          console.error('Supabase recordCustomerMovement API error:', error.message, error.details);
+        } else if (result) {
+          return { success: true, data: result };
+        }
+      } catch (err) {
+        console.error('Supabase recordCustomerMovement network error:', err);
       }
     }
 
@@ -241,8 +252,13 @@ export const stockService = {
 
   deleteMovement: async (id: string) => {
     if (isSupabaseConfigured()) {
-      const { error } = await supabase.from('stock_movements').delete().eq('id', id);
-      if (!error) return { success: true };
+      try {
+        const { error } = await supabase.from('stock_movements').delete().eq('id', id);
+        if (!error) return { success: true };
+        console.error('Supabase deleteMovement API error:', error.message);
+      } catch (err) {
+        console.error('Supabase deleteMovement network error:', err);
+      }
     }
 
     const sMovements = getStorageData<StockMovement[]>(STORAGE_KEYS.SUPPLIER_MOVEMENTS, []);
@@ -266,8 +282,13 @@ export const stockService = {
 
   updateSupplier: async (id: string, data: Partial<Supplier>) => {
     if (isSupabaseConfigured()) {
-      const { error } = await supabase.from('suppliers').update(data).eq('id', id);
-      if (!error) return { success: true };
+      try {
+        const { error } = await supabase.from('suppliers').update(data).eq('id', id);
+        if (!error) return { success: true };
+        console.error('Supabase updateSupplier API error:', error.message);
+      } catch (err) {
+        console.error('Supabase updateSupplier network error:', err);
+      }
     }
     const suppliers = await stockService.getSuppliers();
     const index = suppliers.findIndex(s => s.id === id);
@@ -281,9 +302,13 @@ export const stockService = {
 
   deleteSupplier: async (id: string) => {
     if (isSupabaseConfigured()) {
-      await supabase.from('stock_movements').delete().eq('supplier_id', id);
-      await supabase.from('suppliers').delete().eq('id', id);
-      return { success: true };
+      try {
+        await supabase.from('stock_movements').delete().eq('supplier_id', id);
+        await supabase.from('suppliers').delete().eq('id', id);
+        return { success: true };
+      } catch (err) {
+        console.error('Supabase deleteSupplier network error:', err);
+      }
     }
     const suppliers = await stockService.getSuppliers();
     setStorageData(STORAGE_KEYS.SUPPLIERS, suppliers.filter(s => s.id !== id));
@@ -292,8 +317,13 @@ export const stockService = {
 
   updateCustomer: async (id: string, data: Partial<Customer>) => {
     if (isSupabaseConfigured()) {
-      const { error } = await supabase.from('customers').update(data).eq('id', id);
-      if (!error) return { success: true };
+      try {
+        const { error } = await supabase.from('customers').update(data).eq('id', id);
+        if (!error) return { success: true };
+        console.error('Supabase updateCustomer API error:', error.message);
+      } catch (err) {
+        console.error('Supabase updateCustomer network error:', err);
+      }
     }
     const customers = await stockService.getCustomers();
     const index = customers.findIndex(c => c.id === id);
@@ -307,9 +337,13 @@ export const stockService = {
 
   deleteCustomer: async (id: string) => {
     if (isSupabaseConfigured()) {
-      await supabase.from('stock_movements').delete().eq('customer_id', id);
-      await supabase.from('customers').delete().eq('id', id);
-      return { success: true };
+      try {
+        await supabase.from('stock_movements').delete().eq('customer_id', id);
+        await supabase.from('customers').delete().eq('id', id);
+        return { success: true };
+      } catch (err) {
+        console.error('Supabase deleteCustomer network error:', err);
+      }
     }
     const customers = await stockService.getCustomers();
     setStorageData(STORAGE_KEYS.CUSTOMERS, customers.filter(c => c.id !== id));
@@ -344,16 +378,26 @@ export const stockService = {
   // Added missing methods to maintain compatibility
   getSupplierMovements: async (): Promise<StockMovement[]> => {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('stock_movements').select('*').not('supplier_id', 'is', null).order('date', { ascending: false });
-      if (!error && data) return data;
+      try {
+        const { data, error } = await supabase.from('stock_movements').select('*').not('supplier_id', 'is', null).order('date', { ascending: false });
+        if (!error && data) return data;
+        if (error) console.error('Supabase getSupplierMovements API error:', error.message);
+      } catch (err) {
+        console.error('Supabase getSupplierMovements network error:', err);
+      }
     }
     return getStorageData<StockMovement[]>(STORAGE_KEYS.SUPPLIER_MOVEMENTS, []);
   },
 
   getCustomerMovements: async (): Promise<StockMovement[]> => {
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('stock_movements').select('*').not('customer_id', 'is', null).order('date', { ascending: false });
-      if (!error && data) return data;
+      try {
+        const { data, error } = await supabase.from('stock_movements').select('*').not('customer_id', 'is', null).order('date', { ascending: false });
+        if (!error && data) return data;
+        if (error) console.error('Supabase getCustomerMovements API error:', error.message);
+      } catch (err) {
+        console.error('Supabase getCustomerMovements network error:', err);
+      }
     }
     return getStorageData<StockMovement[]>(STORAGE_KEYS.CUSTOMER_MOVEMENTS, []);
   },

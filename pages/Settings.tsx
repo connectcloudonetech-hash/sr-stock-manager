@@ -29,6 +29,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
 import { stockService } from '../lib/services/stockService';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { UserRole } from '../types';
 
 interface CompanyProfile {
@@ -306,6 +307,7 @@ export const Settings: React.FC = () => {
         );
 
       case 'database':
+        const hasSupabase = isSupabaseConfigured();
         const env = (import.meta as any).env;
         const hasUrl = !!env?.VITE_SUPABASE_URL && env?.VITE_SUPABASE_URL !== 'your_supabase_project_url';
         const hasKey = !!env?.VITE_SUPABASE_ANON_KEY && env?.VITE_SUPABASE_ANON_KEY !== 'your_supabase_anon_key';
@@ -345,7 +347,7 @@ export const Settings: React.FC = () => {
               </div>
             </div>
 
-            {!hasUrl || !hasKey || !isHttps ? (
+            {!hasSupabase ? (
               <div className="bg-rose-50 p-6 rounded-[32px] border border-rose-100">
                 <div className="flex items-center gap-3 text-rose-600 mb-2">
                   <AlertTriangle size={20} />
