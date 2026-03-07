@@ -5,24 +5,28 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
-// Use direct access to import.meta.env for Vite to handle correctly
+// Use standard Vite environment variable access
 const env = (import.meta as any).env;
 const supabaseUrl = env?.VITE_SUPABASE_URL;
 const supabaseAnonKey = env?.VITE_SUPABASE_ANON_KEY || env?.VITE_SUPABASE_ANON;
 
 // Strict check for valid credentials
 export const isSupabaseConfigured = () => {
-  return !!(
+  const isConfigured = !!(
     supabaseUrl && 
     supabaseAnonKey && 
     supabaseUrl !== 'your_supabase_project_url' && 
     supabaseUrl !== 'https://your-project.supabase.co' &&
+    supabaseUrl !== 'https://placeholder.supabase.co' &&
     supabaseUrl.startsWith('https://')
   );
+  return isConfigured;
 };
 
 if (!isSupabaseConfigured()) {
   console.warn('Supabase credentials missing or invalid. Cloud sync is disabled. Using LocalStorage fallback.');
+} else {
+  console.log('Supabase Cloud Sync initialized successfully.');
 }
 
 export const supabase = createClient(

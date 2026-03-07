@@ -52,7 +52,11 @@ export const stockService = {
       setStorageData(STORAGE_KEYS.CATEGORIES, updated);
       
       if (isSupabaseConfigured()) {
-        await supabase.from('categories').upsert({ name: upperName });
+        try {
+          await supabase.from('categories').upsert({ name: upperName });
+        } catch (err) {
+          console.error('Supabase addCategory network error:', err);
+        }
       }
     }
     return upperName;
@@ -419,14 +423,30 @@ export const stockService = {
 
   updateMovement: async (id: string, data: Partial<StockMovement>) => {
     if (isSupabaseConfigured()) {
-      const { error } = await supabase.from('stock_movements').update(data).eq('id', id);
-      if (!error) return { success: true };
+      try {
+        const { error } = await supabase.from('stock_movements').update(data).eq('id', id);
+        if (!error) return { success: true };
+        console.error('Supabase updateMovement API error:', error.message);
+      } catch (err) {
+        console.error('Supabase updateMovement network error:', err);
+      }
     }
     // Fallback logic omitted for brevity as Supabase is primary
     return { success: false, error: 'Supabase update failed' };
   },
 
   clearAllData: async () => {
+    if (isSupabaseConfigured()) {
+      try {
+        // Delete in order to respect potential foreign key constraints
+        await supabase.from('stock_movements').delete().neq('id', '0');
+        await supabase.from('suppliers').delete().neq('id', '0');
+        await supabase.from('customers').delete().neq('id', '0');
+        await supabase.from('categories').delete().neq('name', 'OTHERS');
+      } catch (err) {
+        console.error('Supabase clearAllData network error:', err);
+      }
+    }
     localStorage.clear();
     return { success: true };
   }

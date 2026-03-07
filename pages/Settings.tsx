@@ -63,6 +63,7 @@ export const Settings: React.FC = () => {
   const [isFingerprintEnabled, setIsFingerprintEnabled] = useState(() => localStorage.getItem('sr_fingerprint') === 'true');
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isWiping, setIsWiping] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [isSubmittingCategory, setIsSubmittingCategory] = useState(false);
@@ -170,14 +171,22 @@ export const Settings: React.FC = () => {
   };
 
   const handleDeleteAll = async () => {
-    if (window.confirm('CRITICAL: This will permanently delete ALL your data. This action cannot be undone. Are you sure?')) {
-      await stockService.clearAllData();
-      localStorage.removeItem('sr_company_profile');
-      localStorage.removeItem('sr_currency');
-      localStorage.removeItem('sr_security_pin');
-      localStorage.removeItem('sr_fingerprint');
-      localStorage.removeItem('sr_theme');
-      window.location.reload();
+    if (window.confirm('CRITICAL: This will permanently delete ALL your data from both LocalStorage and Supabase Cloud. This action cannot be undone. Are you sure?')) {
+      setIsWiping(true);
+      try {
+        await stockService.clearAllData();
+        localStorage.removeItem('sr_company_profile');
+        localStorage.removeItem('sr_currency');
+        localStorage.removeItem('sr_security_pin');
+        localStorage.removeItem('sr_fingerprint');
+        localStorage.removeItem('sr_theme');
+        window.location.reload();
+      } catch (error) {
+        console.error('Wipe failed', error);
+        alert('Failed to wipe data. Please check your connection.');
+      } finally {
+        setIsWiping(false);
+      }
     }
   };
 
@@ -460,11 +469,12 @@ export const Settings: React.FC = () => {
 
             <button 
               onClick={handleDeleteAll}
-              className="w-full p-5 bg-rose-50 border border-rose-100 rounded-[28px] flex items-center justify-between active:bg-rose-100 transition-all shadow-sm group mt-8"
+              disabled={isWiping}
+              className="w-full p-5 bg-rose-50 border border-rose-100 rounded-[28px] flex items-center justify-between active:bg-rose-100 transition-all shadow-sm group mt-8 disabled:opacity-50"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center group-active:scale-90 transition-transform">
-                  <Trash2 size={24} />
+                  {isWiping ? <Loader2 className="animate-spin" size={24} /> : <Trash2 size={24} />}
                 </div>
                 <div className="text-left">
                   <p className="font-black text-rose-900 uppercase tracking-tight">Wipe All Data</p>
