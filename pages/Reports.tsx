@@ -74,7 +74,11 @@ export const Reports: React.FC = () => {
     ]);
     setCustomers(c);
     setSuppliers(v);
-    setAllMovements(m);
+    const filtered = m.filter(mov => 
+      (mov.type === MovementType.IN && mov.supplier_id) || 
+      (mov.type === MovementType.OUT && mov.customer_id)
+    );
+    setAllMovements(filtered);
     setLoading(false);
   };
 

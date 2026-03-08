@@ -56,6 +56,7 @@ export interface StockMovement {
   weight?: number;
   amount?: number;
   remarks?: string;
+  is_internal?: boolean;
   created_at: string;
   created_by: string;
 }

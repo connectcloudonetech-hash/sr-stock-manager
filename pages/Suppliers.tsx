@@ -80,20 +80,13 @@ export const Suppliers: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     await new Promise(r => setTimeout(r, 600));
-    const [v, sm, cm] = await Promise.all([
+    const [v, sm] = await Promise.all([
       stockService.getSuppliers(),
-      stockService.getSupplierMovements(),
-      stockService.getCustomerMovements()
+      stockService.getSupplierMovements()
     ]);
     
-    // Include all supplier movements + internal entries (no customer/supplier ID)
-    const combinedMovements = [
-      ...sm,
-      ...cm.filter(m => !m.customer_id && !m.supplier_id)
-    ];
-    
     setSuppliers(v);
-    setAllMovements(combinedMovements);
+    setAllMovements(sm);
     setLoading(false);
   };
 
@@ -102,8 +95,7 @@ export const Suppliers: React.FC = () => {
     
     // Filter movements for directory stats
     const filteredMovementsForStats = allMovements.filter(m => {
-      const isInternalOut = !m.supplier_id && !m.customer_id && m.type === MovementType.OUT;
-      if (!m.supplier_id && !isInternalOut) return false;
+      if (!m.supplier_id) return false;
       
       const mDate = m.date;
       if (reportType === 'day') return mDate === today;

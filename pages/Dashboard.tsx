@@ -47,7 +47,11 @@ export const Dashboard: React.FC = () => {
       stockService.getSuppliers()
     ]);
     const cats = stockService.getCategories();
-    const sortedMovements = [...m].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const filtered = m.filter(mov => 
+      (mov.type === MovementType.IN && mov.supplier_id) || 
+      (mov.type === MovementType.OUT && mov.customer_id)
+    );
+    const sortedMovements = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setMovements(sortedMovements);
     setCustomers(c);
     setSuppliers(v);
