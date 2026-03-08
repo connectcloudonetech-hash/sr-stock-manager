@@ -356,8 +356,45 @@ export const stockService = {
   },
 
   ensureProductExists: async (name: string, category: string = 'OTHERS'): Promise<void> => {
-    // This was used for local product tracking, can be a no-op or category check for Supabase
-    await stockService.addCategory(category);
+    const products = await stockService.getProducts();
+    const upperName = name.toUpperCase();
+    
+    // Check if product already exists
+    if (!products.find(p => p.name.toUpperCase() === upperName)) {
+      const newProduct: Product = {
+        id: `p-${Math.random().toString(36).substr(2, 5)}`,
+        name: upperName,
+        category: category.toUpperCase(),
+        unit: 'PCS',
+        current_stock: 0
+      };
+      
+      const updated = [...products, newProduct];
+      setStorageData(STORAGE_KEYS.PRODUCTS, updated);
+      
+      if (isSupabaseConfigured()) {
+        try {
+          await supabase.from('products').upsert(newProduct);
+        } catch (err) {
+          console.error('Supabase ensureProductExists error:', err);
+        }
+      }
+    }
+  },
+
+  deleteProductByName: async (name: string): Promise<void> => {
+    const products = await stockService.getProducts();
+    const upperName = name.toUpperCase();
+    const updated = products.filter(p => p.name.toUpperCase() !== upperName);
+    setStorageData(STORAGE_KEYS.PRODUCTS, updated);
+    
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase.from('products').delete().eq('name', upperName);
+      } catch (err) {
+        console.error('Supabase deleteProductByName error:', err);
+      }
+    }
   },
 
   clearSupplierHistory: async (supplierId: string) => {

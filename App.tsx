@@ -15,6 +15,7 @@ import { Settings } from './pages/Settings';
 import { PinLock } from './components/PinLock';
 import { UserRole, UserProfile } from './types';
 import { SplashScreen } from './components/SplashScreen';
+import { stockService } from './lib/services/stockService';
 
 // Mock Auth Context for Demo
 interface AuthContextType {
@@ -74,6 +75,29 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, roles?: UserRole[] }
 
 const App: React.FC = () => {
   const [isLocked, setIsLocked] = useState(() => !!localStorage.getItem('sr_security_pin'));
+
+  // One-time cleanup for specific products requested by user
+  useEffect(() => {
+    const cleanup = async () => {
+      const productsToClear = [
+        'dell latitude 5420',
+        'iphone 15 pro',
+        'black abaya',
+        'gaming console x',
+        'intel core i7'
+      ];
+      
+      const hasCleaned = localStorage.getItem('sr_cleanup_v1');
+      if (!hasCleaned) {
+        for (const name of productsToClear) {
+          await stockService.deleteProductByName(name);
+          await stockService.deleteCategory(name.toUpperCase());
+        }
+        localStorage.setItem('sr_cleanup_v1', 'true');
+      }
+    };
+    cleanup();
+  }, []);
 
   return (
     <AuthProvider>
