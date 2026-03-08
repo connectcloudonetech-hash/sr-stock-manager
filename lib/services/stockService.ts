@@ -163,12 +163,7 @@ export const stockService = {
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase.from('stock_movements').select('*').order('date', { ascending: false });
-        if (!error && data) {
-          return data.map(m => ({
-            ...m,
-            is_internal: m.remarks?.toUpperCase().includes('[INT]') || m.remarks?.toUpperCase().includes('INTERNAL')
-          }));
-        }
+        if (!error && data) return data;
         if (error) console.error('Supabase getMovements API error:', error.message);
       } catch (err) {
         console.error('Supabase getMovements network error:', err);
@@ -179,19 +174,11 @@ export const stockService = {
       getStorageData<StockMovement[]>(STORAGE_KEYS.SUPPLIER_MOVEMENTS, []),
       getStorageData<StockMovement[]>(STORAGE_KEYS.CUSTOMER_MOVEMENTS, [])
     ]);
-    return [...s, ...c].map(m => ({
-      ...m,
-      is_internal: m.remarks?.toUpperCase().includes('[INT]') || m.remarks?.toUpperCase().includes('INTERNAL')
-    }));
+    return [...s, ...c];
   },
 
   recordSupplierMovement: async (data: Partial<StockMovement>, type: MovementType) => {
     const newId = `sm-${Math.random().toString(36).substr(2, 9)}`;
-    let finalRemarks = data.remarks?.toUpperCase() || '';
-    if (data.is_internal) {
-      finalRemarks += ' [INT]';
-    }
-
     const movementData = {
       id: newId,
       date: data.date!,
@@ -203,7 +190,7 @@ export const stockService = {
       unit_price: data.unit_price,
       weight: data.weight,
       amount: data.amount,
-      remarks: finalRemarks,
+      remarks: data.remarks?.toUpperCase(),
       created_by: '1',
     };
 
@@ -231,11 +218,6 @@ export const stockService = {
 
   recordCustomerMovement: async (data: Partial<StockMovement>, type: MovementType) => {
     const newId = `cm-${Math.random().toString(36).substr(2, 9)}`;
-    let finalRemarks = data.remarks?.toUpperCase() || '';
-    if (data.is_internal) {
-      finalRemarks += ' [INT]';
-    }
-
     const movementData = {
       id: newId,
       date: data.date!,
@@ -247,7 +229,7 @@ export const stockService = {
       unit_price: data.unit_price,
       weight: data.weight,
       amount: data.amount,
-      remarks: finalRemarks,
+      remarks: data.remarks?.toUpperCase(),
       created_by: '1',
     };
 
@@ -403,42 +385,26 @@ export const stockService = {
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase.from('stock_movements').select('*').not('supplier_id', 'is', null).order('date', { ascending: false });
-        if (!error && data) {
-          return data.map(m => ({
-            ...m,
-            is_internal: m.remarks?.toUpperCase().includes('[INT]') || m.remarks?.toUpperCase().includes('INTERNAL')
-          }));
-        }
+        if (!error && data) return data;
         if (error) console.error('Supabase getSupplierMovements API error:', error.message);
       } catch (err) {
         console.error('Supabase getSupplierMovements network error:', err);
       }
     }
-    return getStorageData<StockMovement[]>(STORAGE_KEYS.SUPPLIER_MOVEMENTS, []).map(m => ({
-      ...m,
-      is_internal: m.remarks?.toUpperCase().includes('[INT]') || m.remarks?.toUpperCase().includes('INTERNAL')
-    }));
+    return getStorageData<StockMovement[]>(STORAGE_KEYS.SUPPLIER_MOVEMENTS, []);
   },
 
   getCustomerMovements: async (): Promise<StockMovement[]> => {
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase.from('stock_movements').select('*').not('customer_id', 'is', null).order('date', { ascending: false });
-        if (!error && data) {
-          return data.map(m => ({
-            ...m,
-            is_internal: m.remarks?.toUpperCase().includes('[INT]') || m.remarks?.toUpperCase().includes('INTERNAL')
-          }));
-        }
+        if (!error && data) return data;
         if (error) console.error('Supabase getCustomerMovements API error:', error.message);
       } catch (err) {
         console.error('Supabase getCustomerMovements network error:', err);
       }
     }
-    return getStorageData<StockMovement[]>(STORAGE_KEYS.CUSTOMER_MOVEMENTS, []).map(m => ({
-      ...m,
-      is_internal: m.remarks?.toUpperCase().includes('[INT]') || m.remarks?.toUpperCase().includes('INTERNAL')
-    }));
+    return getStorageData<StockMovement[]>(STORAGE_KEYS.CUSTOMER_MOVEMENTS, []);
   },
 
   getMovementById: async (id: string): Promise<StockMovement | undefined> => {
@@ -466,8 +432,35 @@ export const stockService = {
         console.error('Supabase updateMovement network error:', err);
       }
     }
-    // Fallback logic omitted for brevity as Supabase is primary
-    return { success: false, error: 'Supabase update failed' };
+    
+    const sMovements = getStorageData<StockMovement[]>(STORAGE_KEYS.SUPPLIER_MOVEMENTS, []);
+    const cMovements = getStorageData<StockMovement[]>(STORAGE_KEYS.CUSTOMER_MOVEMENTS, []);
+    
+    let updated = false;
+    
+    const newS = sMovements.map(m => {
+      if (m.id === id) {
+        updated = true;
+        return { ...m, ...data };
+      }
+      return m;
+    });
+    
+    const newC = cMovements.map(m => {
+      if (m.id === id) {
+        updated = true;
+        return { ...m, ...data };
+      }
+      return m;
+    });
+    
+    if (updated) {
+      setStorageData(STORAGE_KEYS.SUPPLIER_MOVEMENTS, newS);
+      setStorageData(STORAGE_KEYS.CUSTOMER_MOVEMENTS, newC);
+      return { success: true };
+    }
+    
+    return { success: false, error: 'Movement not found' };
   },
 
   clearAllData: async () => {

@@ -33,8 +33,7 @@ export const CarryOut: React.FC = () => {
     unit_price: '',
     weight: '',
     amount: '',
-    remarks: '',
-    is_internal: !!(location.state?.supplierId || location.state?.customerId)
+    remarks: ''
   });
 
   // Merge predefined categories with product names for the dropdown
@@ -61,26 +60,25 @@ export const CarryOut: React.FC = () => {
         const movement = await stockService.getMovementById(id);
         if (movement) {
           const isPredefinedCategory = cats.includes(movement.category) || p.some(prod => prod.name.toUpperCase() === movement.category.toUpperCase());
-            setFormData({
-              date: movement.date,
-              category: isPredefinedCategory ? movement.category : 'OTHERS',
-              customer_id: movement.customer_id || '',
-              supplier_id: movement.supplier_id || '',
-              nos: movement.nos.toString(),
-              unit_price: movement.unit_price?.toString() || '',
-              weight: movement.weight?.toString() || '',
-              amount: movement.amount?.toString() || '',
-              remarks: movement.remarks?.replace(' [INT]', '') || '',
-              is_internal: movement.is_internal || false
-            });
+          setFormData({
+            date: movement.date,
+            category: isPredefinedCategory ? movement.category : 'OTHERS',
+            customer_id: movement.customer_id || '',
+            supplier_id: movement.supplier_id || '',
+            nos: movement.nos.toString(),
+            unit_price: movement.unit_price?.toString() || '',
+            weight: movement.weight?.toString() || '',
+            amount: movement.amount?.toString() || '',
+            remarks: movement.remarks || ''
+          });
           if (!isPredefinedCategory) {
             setCustomCategory(movement.category);
           }
         }
       } else if (location.state?.customerId) {
-        setFormData(prev => ({ ...prev, customer_id: location.state.customerId, is_internal: true }));
+        setFormData(prev => ({ ...prev, customer_id: location.state.customerId }));
       } else if (location.state?.supplierId) {
-        setFormData(prev => ({ ...prev, supplier_id: location.state.supplierId, is_internal: true }));
+        setFormData(prev => ({ ...prev, supplier_id: location.state.supplierId }));
       }
     };
     loadData();
@@ -128,12 +126,12 @@ export const CarryOut: React.FC = () => {
         category: finalCategory.toUpperCase(),
         customer_id: formData.customer_id || undefined,
         supplier_id: formData.supplier_id || undefined,
+        qty: Number(formData.nos),
         nos: Number(formData.nos),
         unit_price: formData.unit_price ? Number(formData.unit_price) : undefined,
         weight: formData.weight ? Number(formData.weight) : undefined,
         amount: formData.amount ? Number(formData.amount) : undefined,
-        remarks: formData.remarks.toUpperCase(),
-        is_internal: formData.is_internal
+        remarks: formData.remarks.toUpperCase()
       };
 
       if (id) {

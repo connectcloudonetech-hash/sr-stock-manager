@@ -464,25 +464,43 @@ export const Reports: React.FC = () => {
       doc.setFontSize(8);
       doc.text(`DATE: ${new Date().toLocaleString().toUpperCase()}`, pageWidth - 15, 32, { align: 'right' });
 
-      const catSummary: Record<string, { in: number, out: number, amount: number }> = {};
+      const catSummary: Record<string, { in: number, out: number }> = {};
+      const supplierSummary: Record<string, { in: number, out: number }> = {};
+      const customerSummary: Record<string, { in: number, out: number }> = {};
+
       allMovements.forEach((m) => {
-        if (!catSummary[m.category]) catSummary[m.category] = { in: 0, out: 0, amount: 0 };
-        catSummary[m.category].amount += (m.amount || 0);
+        // Category Summary
+        if (!catSummary[m.category]) catSummary[m.category] = { in: 0, out: 0 };
         if (m.type === MovementType.IN) catSummary[m.category].in += m.nos;
         else catSummary[m.category].out += m.nos;
+
+        // Supplier Summary
+        if (m.supplier_id) {
+          const sName = suppliers.find(s => s.id === m.supplier_id)?.name || m.supplier_id;
+          if (!supplierSummary[sName]) supplierSummary[sName] = { in: 0, out: 0 };
+          if (m.type === MovementType.IN) supplierSummary[sName].in += m.nos;
+          else supplierSummary[sName].out += m.nos;
+        }
+
+        // Customer Summary
+        if (m.customer_id) {
+          const cName = customers.find(c => c.id === m.customer_id)?.name || m.customer_id;
+          if (!customerSummary[cName]) customerSummary[cName] = { in: 0, out: 0 };
+          if (m.type === MovementType.IN) customerSummary[cName].in += m.nos;
+          else customerSummary[cName].out += m.nos;
+        }
       });
 
       const summaryData = Object.entries(catSummary).map(([cat, vals]) => [
         cat.toUpperCase(),
         vals.out,
         vals.in,
-        vals.in - vals.out,
-        (vals.amount || 0).toLocaleString()
+        vals.in - vals.out
       ]);
 
       autoTable(doc, {
         startY: 50,
-        head: [['CATEGORY', 'TOTAL SALE', 'TOTAL PURCHASE', 'CURRENT STOCK', 'VALUE (INR)']],
+        head: [['CATEGORY', 'TOTAL SALE', 'TOTAL PURCHASE', 'CURRENT STOCK']],
         body: summaryData,
         theme: 'grid',
         styles: {
@@ -495,8 +513,7 @@ export const Reports: React.FC = () => {
           0: { fontStyle: 'bold' },
           1: { halign: 'center' },
           2: { halign: 'center' },
-          3: { halign: 'center', fontStyle: 'bold' },
-          4: { halign: 'right' }
+          3: { halign: 'center', fontStyle: 'bold' }
         },
         didParseCell: (data) => {
           if (data.section === 'body' && data.column.index === 3) {
@@ -507,11 +524,67 @@ export const Reports: React.FC = () => {
         }
       });
 
+      let currentY = (doc as any).lastAutoTable.finalY + 15;
+
+      // Supplier Summary Table
+      if (Object.keys(supplierSummary).length > 0) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 41, 59);
+        doc.text("SUPPLIER SUMMARY", 15, currentY);
+        
+        const supplierData = Object.entries(supplierSummary).map(([name, vals]) => [
+          name.toUpperCase(),
+          vals.in,
+          vals.out,
+          vals.in - vals.out
+        ]);
+
+        autoTable(doc, {
+          startY: currentY + 5,
+          head: [['SUPPLIER NAME', 'TOTAL PURCHASE', 'TOTAL RETURN', 'NET BALANCE']],
+          body: supplierData,
+          theme: 'grid',
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [71, 85, 105] },
+          columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // Customer Summary Table
+      if (Object.keys(customerSummary).length > 0) {
+        if (currentY > pageHeight - 40) { doc.addPage(); currentY = 20; }
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 41, 59);
+        doc.text("CUSTOMER SUMMARY", 15, currentY);
+
+        const customerData = Object.entries(customerSummary).map(([name, vals]) => [
+          name.toUpperCase(),
+          vals.out,
+          vals.in,
+          vals.out - vals.in
+        ]);
+
+        autoTable(doc, {
+          startY: currentY + 5,
+          head: [['CUSTOMER NAME', 'TOTAL SALE', 'TOTAL RETURN', 'NET BALANCE']],
+          body: customerData,
+          theme: 'grid',
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [71, 85, 105] },
+          columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' } }
+        });
+        currentY = (doc as any).lastAutoTable.finalY + 15;
+      }
+
       const totalCashIn = allMovements.filter(m => m.type === MovementType.OUT).reduce((sum, m) => sum + (m.amount || 0), 0);
       const totalCashOut = allMovements.filter(m => m.type === MovementType.IN).reduce((sum, m) => sum + (m.amount || 0), 0);
       const netCashBalance = totalCashIn - totalCashOut;
 
-      const finalY = (doc as any).lastAutoTable.finalY + 10;
+      if (currentY > pageHeight - 30) { doc.addPage(); currentY = 20; }
+      const finalY = currentY;
       doc.setFillColor(241, 245, 249);
       doc.rect(15, finalY, pageWidth - 30, 15, 'F');
       doc.setFontSize(9);
